@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>以茶为媒 以旅为用 - 茶旅融合</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "微软雅黑", "Microsoft YaHei", sans-serif; }
+        body { background-color: #f8f9f5; min-height: 100vh; padding-bottom: 70px; /* 新增：给底部导航留出空间 */ }
+        
+        /* 基础布局 - 适配电脑端 */
+        .page-container { 
+            min-height: calc(100vh - 70px); 
+            overflow-y: auto;
+            max-width: 1440px; /* 限制最大宽度，避免大屏拉伸 */
+            margin: 0 auto; /* 居中显示 */
+            padding: 0 20px;
+        }
+        .page { display: none; min-height: 100%; padding: 20px 0; }
+        .page.active { display: block; }
+        
+        /* 顶部导航（新增）- 电脑端更符合使用习惯 */
+        .top-nav {
+            background: #2c5c42;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 998;
+        }
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .top-nav-right {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+        .search-box {
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: none;
+            width: 250px;
+            outline: none;
+        }
+        .login-btn {
+            padding: 8px 20px;
+            background: white;
+            color: #2c5c42;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        /* 底部导航 - 改为固定悬浮 */
+        .nav { 
+            position: fixed; /* 关键修改：改为固定定位 */
+            bottom: 0;       /* 固定在底部 */
+            left: 0;         /* 铺满整个宽度 */
+            right: 0;
+            background: #fff; 
+            border-top: 1px solid #eee; 
+            padding: 15px 0; 
+            z-index: 999; 
+            height: 70px;
+            display: flex;
+            justify-content: center; /* 居中显示 */
+            max-width: 100%; /* 修改：铺满宽度 */
+            margin: 0 auto;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05); /* 新增：底部阴影提升层次感 */
+        }
+        .nav-item { 
+            flex: 0 0 120px; /* 固定宽度，避免拉伸 */
+            text-align: center; 
+            font-size: 1rem; 
+            color: #666; 
+            cursor: pointer; 
+            transition: color 0.2s;
+        }
+        .nav-item:hover { color: #2c5c42; }
+        .nav-item.active { 
+            color: #2c5c42; 
+            font-weight: bold;
+            position: relative;
+        }
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 3px;
+            background: #2c5c42;
+            border-radius: 3px;
+        }
+        .nav-item i { 
+            display: inline-block; /* 改为行内块，图标和文字并排 */
+            font-size: 1.2rem; 
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        
+        /* 弹窗样式 - 优化电脑端体验 */
+        .modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            bottom: 0; 
+            background: rgba(0,0,0,0.5); 
+            z-index: 1000; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        .modal-content { 
+            background: #fff; 
+            border-radius: 12px; 
+            width: 60%; /* 调整宽度适配电脑端 */
+            max-width: 600px; 
+            padding: 30px; 
+            max-height: 80vh; 
+            overflow-y: auto;
+            box-shadow: 0 5px 30px rgba(0,0,0,0.2);
+        }
+        .modal-close { 
+            text-align: right; 
+            font-size: 1.8rem; 
+            cursor: pointer; 
+            color: #666; 
+            margin-bottom: 15px;
+            transition: color 0.2s;
+        }
+        .modal-close:hover { color: #e63946; }
+        .modal-body { margin: 10px 0; }
+        .btn { 
+            background: #2c5c42; 
+            color: #fff; 
+            border: none; 
+            padding: 12px 25px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 1rem; 
+            margin-top: 15px;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: #1e4730; }
+        .btn-gray { 
+            background: #ccc; 
+            color: #333; 
+        }
+        .btn-gray:hover { background: #bbb; }
+        
+        /* 1. 主页样式 - 电脑端优化 */
+        .index-header { 
+            position: relative; 
+            height: 50vh; /* 增加高度 */
+            overflow: hidden;
+            border-radius: 12px; /* 增加圆角 */
+            margin-bottom: 40px;
+        }
+        .index-header img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+        }
+        .index-header h1 { 
+            position: absolute; 
+            bottom: 40px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            color: #333; 
+            font-size: 3rem; 
+            text-shadow: 1px 1px 5px rgba(255,255,255,0.9);
+        }
+        .recommend { padding: 0; }
+        .recommend h2 { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            color: #2c5c42;
+            font-size: 2rem;
+        }
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); /* 电脑端显示4列 */
+            gap: 25px;
+        }
+        .grid-item { 
+            background: #fff; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            cursor: pointer; 
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .grid-item:hover { 
+            transform: translateY(-8px); 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        .grid-item img { 
+            width: 100%; 
+            height: 220px; /* 增加图片高度 */
+            object-fit: cover; 
+        }
+        .grid-item p { 
+            padding: 15px; 
+            text-align: center; 
+            color: #333;
+            font-size: 1.1rem;
+        }
+        
+        /* 2. 商城样式 - 电脑端优化 */
+        .mall-wrapper {
+            display: flex;
+            gap: 20px;
+            min-height: calc(100vh - 150px);
+        }
+        .sidebar { 
+            position: sticky; /* 改为粘性定位，滚动时固定 */
+            top: 90px; /* 距离顶部导航的距离 */
+            flex: 0 0 180px; /* 增加宽度 */
+            background: #fff; 
+            border-right: 1px solid #eee;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            height: fit-content; /* 自适应高度 */
+            padding: 10px 0;
+        }
+        .sidebar-item { 
+            padding: 20px 0; 
+            text-align: center; 
+            font-size: 1.2rem; 
+            color: #666; 
+            cursor: pointer; 
+            transition: all 0.2s;
+        }
+        .sidebar-item:hover { color: #2c5c42; }
+        .sidebar-item.active { 
+            color: #2c5c42; 
+            border-left: 4px solid #2c5c42;
+            font-weight: bold;
+        }
+        .mall-content { 
+            flex: 1;
+            padding: 0; 
+            height: 100%; 
+            overflow-y: auto;
+        }
+        .filter { 
+            margin-bottom: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .filter-row { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 15px; 
+            margin-bottom: 15px;
+            align-items: center;
+        }
+        .filter-row span {
+            font-weight: bold;
+            color: #333;
+            min-width: 80px;
+        }
+        .filter-tag { 
+            padding: 8px 20px; 
+            background: #fff; 
+            border: 1px solid #ddd; 
+            border-radius: 20px; 
+            font-size: 1rem; 
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-tag:hover { border-color: #2c5c42; }
+        .filter-tag.highlight { 
+            background: #2c5c42; 
+            color: #fff; 
+            border-color: #2c5c42;
+        }
+        .goods-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); /* 电脑端显示3列 */
+            gap: 25px;
+        }
+        .goods-item { 
+            background: #fff; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .goods-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        .goods-item img { 
+            width: 100%; 
+            height: 200px; /* 增加图片高度 */
+            object-fit: cover; 
+        }
+        .goods-info { 
+            padding: 15px; 
+        }
+        .goods-title { 
+            font-size: 1.1rem; 
+            margin-bottom: 8px; 
+        }
+        .goods-price { 
+            color: #e63946; 
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        /* 3. 定制页面样式 - 电脑端优化 */
+        .custom-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .map-header { 
+            display: flex; 
+            background: #4a90e2; 
+            color: #fff; 
+            padding: 15px; 
+            overflow-x: auto;
+            border-radius: 8px;
+            gap: 10px;
+        }
+        .map-header .date { 
+            flex: 0 0 100px; 
+            text-align: center; 
+            padding: 10px 0; 
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .map-header .date:hover { background: rgba(255,255,255,0.1); }
+        .map-header .date.active { 
+            font-weight: bold; 
+            border-bottom: 3px solid #fff;
+            background: rgba(255,255,255,0.1);
+        }
+        .map-booking-wrapper {
+            display: flex;
+            gap: 30px;
+            flex: 1;
+        }
+        .map-container { 
+            flex: 2;
+            height: 60vh; /* 增加地图高度 */
+            background: #eee; 
+            position: relative; 
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .map-container img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+        }
+        .map-hotspot { 
+            position: absolute; 
+            width: 40px; 
+            height: 40px; 
+            background: #e63946; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: white; 
+            font-size: 14px; 
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        .map-hotspot:hover { transform: scale(1.1); }
+        .map-hotspot-1 { top: 30%; left: 40%; }
+        .map-hotspot-2 { top: 50%; left: 60%; }
+        .booking { 
+            flex: 1;
+            padding: 30px; 
+            text-align: center;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .booking h2 { 
+            color: #333; 
+            font-size: 1.8rem; 
+            margin-bottom: 30px; 
+        }
+        .booking-form { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+            max-width: 100%; /* 取消最大宽度限制 */
+            margin: 0;
+        }
+        .booking-form input { 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 1rem;
+        }
+        
+        /* 4. 文化学堂样式 - 电脑端优化 */
+        .banner { 
+            position: relative; 
+            height: 40vh; /* 增加高度 */
+            overflow: hidden;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        .banner img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+        }
+        .banner h1 { 
+            position: absolute; 
+            top: 40px; 
+            right: 40px; 
+            color: #000; 
+            font-size: 6rem; 
+            opacity: 0.8;
+        }
+        .video-list { 
+            padding: 0; 
+            height: calc(100% - 40vh); 
+            overflow-y: auto;
+        }
+        .video-item { 
+            display: flex; 
+            gap: 20px; 
+            background: #fff; 
+            margin-bottom: 15px; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .video-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        .video-item img { 
+            width: 180px; /* 增加图片宽度 */
+            height: 100px; /* 增加图片高度 */
+            object-fit: cover; 
+            border-radius: 8px; 
+            flex-shrink: 0; /* 防止图片被压缩 */
+        }
+        .video-info { 
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .video-title { 
+            font-size: 1.2rem; 
+            margin-bottom: 8px; 
+            color: #333;
+        }
+        .video-desc { 
+            font-size: 1rem; 
+            color: #666; 
+        }
+        
+        /* 5. AR体验样式 - 电脑端优化 */
+        .ar-container { 
+            padding: 60px 20px; 
+            display: flex; 
+            gap: 50px; /* 增加间距 */
+            align-items: center; 
+            justify-content: center; /* 水平居中 */
+            min-height: calc(100vh - 150px);
+        }
+        .ar-card { 
+            width: 40%; /* 调整宽度 */
+            min-width: 300px;
+            background: #e6f4ea; 
+            border-radius: 20px; 
+            padding: 60px 40px; 
+            text-align: center; 
+            cursor: pointer; 
+            transition: all 0.3s;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .ar-card:hover { 
+            background: #d1e9d9; 
+            transform: translateY(-10px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+        }
+        .ar-card .ar-icon { 
+            font-size: 7rem; 
+            color: #2c5c42; 
+            margin-bottom: 30px; 
+        }
+        .ar-card .ar-desc { 
+            font-size: 1.5rem; 
+            color: #333; 
+            margin-bottom: 25px; 
+            line-height: 1.6;
+        }
+        
+        /* 6. 用户中心样式 - 电脑端优化 */
+        .user-wrapper {
+            display: flex;
+            gap: 30px;
+            min-height: calc(100vh - 150px);
+        }
+        .user-sidebar {
+            flex: 0 0 250px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 30px;
+            height: fit-content;
+            position: sticky;
+            top: 90px;
+        }
+        .user-header { 
+            display: flex; 
+            align-items: center; 
+            padding: 0 0 30px 0; 
+            background: transparent;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+        .avatar { 
+            width: 100px; 
+            height: 100px; 
+            border-radius: 50%; 
+            border: 4px solid #e6f4ea; 
+            margin-right: 20px; 
+            background: #eee; 
+            cursor: pointer; 
+            position: relative; 
+            overflow: hidden;
+        }
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .avatar-upload { 
+            position: absolute; 
+            bottom: 0; 
+            right: 0; 
+            width: 30px; 
+            height: 30px; 
+            background: #2c5c42; 
+            border-radius: 50%; 
+            color: white; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 14px; 
+            transition: background 0.2s;
+        }
+        .avatar-upload:hover { background: #1e4730; }
+        .user-info { 
+            font-size: 1.2rem; 
+            color: #333; 
+            flex: 1; 
+        }
+        .user-info-edit { 
+            color: #4a90e2; 
+            font-size: 1rem; 
+            cursor: pointer; 
+            margin-top: 8px;
+            transition: color 0.2s;
+        }
+        .user-info-edit:hover { color: #2c5c42; }
+        .user-menu-list {
+            margin-top: 0;
+        }
+        .user-menu-item { 
+            background: transparent;
+            padding: 15px 10px; 
+            border-bottom: 1px solid #f0f0f0; 
+            font-size: 1.2rem; 
+            color: #333; 
+            cursor: pointer; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            transition: color 0.2s;
+        }
+        .user-menu-item:hover { 
+            color: #2c5c42;
+            font-weight: bold;
+        }
+        .user-menu-item:last-child { 
+            background: transparent;
+            border-bottom: none;
+        }
+        .user-menu-item i { 
+            color: #999; 
+            font-size: 1.2rem; 
+        }
+        .user-content {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 1.5rem;
+        }
+        
+        /* 加载提示 - 优化样式 */
+        .loading { 
+            display: none; 
+            position: fixed; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            background: rgba(0,0,0,0.8); 
+            color: white; 
+            padding: 20px 35px; 
+            border-radius: 10px; 
+            z-index: 1001;
+            font-size: 1.2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        /* 响应式适配 - 兼容不同屏幕尺寸 */
+        @media (max-width: 1200px) {
+            .grid { grid-template-columns: repeat(3, 1fr); }
+            .goods-grid { grid-template-columns: repeat(2, 1fr); }
+            .ar-container { flex-direction: column; gap: 30px; }
+            .ar-card { width: 80%; }
+        }
+        
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: repeat(2, 1fr); }
+            .goods-grid { grid-template-columns: 1fr; }
+            .map-booking-wrapper { flex-direction: column; }
+            .user-wrapper { flex-direction: column; }
+            .user-sidebar { flex: none; width: 100%; }
+            .modal-content { width: 90%; }
+            .top-nav { padding: 10px 20px; }
+            .search-box { width: 180px; }
+            .nav-item { flex: 0 0 80px; } /* 移动端调整导航项宽度 */
+            .nav-item i { display: block; margin-right: 0; margin-bottom: 5px; } /* 移动端图标换行 */
+        }
+    </style>
+</head>
+<body>
+    <!-- 新增顶部导航 - 电脑端核心优化 -->
+    <div class="top-nav">
+        <div class="logo">茶旅融合</div>
+        <div class="top-nav-right">
+            <input type="text" class="search-box" placeholder="搜索茶叶、茶具、体验课程...">
+            <div class="login-btn">登录/注册</div>
+        </div>
+    </div>
+
+    <!-- 页面内容容器 -->
+    <div class="page-container">
+        <!-- 1. 主页 -->
+        <div class="page active" id="page-index">
+            <div class="index-header">
+                <img src="1.png" alt="茶叶">
+                <h1>特色推荐</h1>
+            </div>
+            <div class="recommend">
+                <h2>精选茶旅好物</h2>
+                <div class="grid">
+                    <div class="grid-item" data-name="精品茶具套装">
+                        <img src="2.png" alt="茶具">
+                        <p>精品茶具套装</p>
+                    </div>
+                    <div class="grid-item" data-name="手工紫砂壶">
+                        <img src="3.png" alt="茶具">
+                        <p>手工紫砂壶</p>
+                    </div>
+                    <div class="grid-item" data-name="古树普洱茶">
+                        <img src="4.jpg" alt="茶壶">
+                        <p>古树普洱茶</p>
+                    </div>
+                    <div class="grid-item" data-name="茶艺体验课">
+                        <img src="5.png" alt="茶艺">
+                        <p>茶艺体验课</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. 商城 - 优化布局结构 -->
+        <div class="page" id="page-mall">
+            <div class="mall-wrapper">
+                <div class="sidebar">
+                    <div class="sidebar-item active" data-category="tea">茶叶</div>
+                    <div class="sidebar-item" data-category="tools">茶具</div>
+                    <div class="sidebar-item" data-category="gifts">茶艺礼品</div>
+                    <div class="sidebar-item" data-category="ar">AR体验</div>
+                </div>
+                <div class="mall-content">
+                    <div class="filter">
+                        <div class="filter-row">
+                            <span>商品发货地</span>
+                            <div class="filter-tag highlight" data-filter="fujian">福建</div>
+                            <div class="filter-tag" data-filter="anhui">安徽</div>
+                            <div class="filter-tag" data-filter="henan">河南</div>
+                            <div class="filter-tag" data-filter="zhejiang">浙江</div>
+                        </div>
+                        <div class="filter-row">
+                            <span>热门品牌</span>
+                            <div class="filter-tag" data-brand="fumingyuan">福茗源</div>
+                            <div class="filter-tag" data-brand="mingjie">茗杰</div>
+                            <div class="filter-tag" data-brand="luluyuan">陆卢缘</div>
+                        </div>
+                    </div>
+                    <div class="goods-grid" id="goodsList">
+                        <div class="goods-item" data-id="1">
+                            <img src="6.jpeg" alt="老班章普洱茶">
+                            <div class="goods-info">
+                                <div class="goods-title">老班章普洱茶</div>
+                                <div class="goods-price">¥1350</div>
+                            </div>
+                        </div>
+                        <div class="goods-item" data-id="2">
+                            <img src="7.jpg" alt="金骏眉红茶">
+                            <div class="goods-info">
+                                <div class="goods-title">金骏眉红茶</div>
+                                <div class="goods-price">¥1333.63</div>
+                            </div>
+                        </div>
+                        <div class="goods-item" data-id="3">
+                            <img src="8.png" alt="大红袍">
+                            <div class="goods-info">
+                                <div class="goods-title">大红袍茶叶特级</div>
+                                <div class="goods-price">¥1000</div>
+                            </div>
+                        </div>
+                        <div class="goods-item" data-id="4">
+                            <img src="9.jpg" alt="老生散">
+                            <div class="goods-info">
+                                <div class="goods-title">1993年班老生散</div>
+                                <div class="goods-price">¥1488</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. 定制 - 优化布局结构 -->
+        <div class="page" id="page-custom">
+            <div class="custom-wrapper">
+                <div class="map-header">
+                    <div class="date">今天<br>01.02</div>
+                    <div class="date">周五<br>01.03</div>
+                    <div class="date">周六<br>01.04</div>
+                    <div class="date active">周日<br>01.05</div>
+                    <div class="date">周一<br>01.06</div>
+                    <div class="date">周二<br>01.07</div>
+                    <div class="date">周三<br>01.08</div>
+                    <div class="date">📅日历</div>
+                </div>
+                <div class="map-booking-wrapper">
+                    <div class="map-container">
+                        <img src="10.png" alt="茶山地图">
+                        <div class="map-hotspot map-hotspot-1">1</div>
+                        <div class="map-hotspot map-hotspot-2">2</div>
+                    </div>
+                    <div class="booking">
+                        <h2>预约制茶大师线下指导制茶</h2>
+                        <form class="booking-form">
+                            <input type="text" placeholder="您的姓名" id="nameInput">
+                            <input type="tel" placeholder="联系电话" id="phoneInput">
+                            <input type="number" placeholder="预约人数" id="peopleInput" min="1" value="1">
+                            <button type="button" class="btn" id="submitBooking">提交预约</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. 文化学堂 -->
+        <div class="page" id="page-culture">
+            <div class="banner">
+                <img src="11.jpg" alt="茶文化">
+                <h1>茶</h1>
+            </div>
+            <div class="video-list">
+                <div class="video-item" data-video="https://v.qq.com/x/page/v09504z8888.html">
+                    <img src="12.png" alt="茶道万里">
+                    <div class="video-info">
+                        <div class="video-title">微纪录片|美美与共:茶道万里 茗香千年</div>
+                        <div class="video-desc">来源: 腾讯视频 | 07:11</div>
+                    </div>
+                </div>
+                <div class="video-item" data-video="https://v.qq.com/x/page/v09504z9999.html">
+                    <img src="13.png" alt="茶文化(上)">
+                    <div class="video-info">
+                        <div class="video-title">人文地理_传统文化_饮食文化_茶文化(上)_科普视频</div>
+                        <div class="video-desc">来源: 腾讯视频 | 11:24</div>
+                    </div>
+                </div>
+                <div class="video-item" data-video="https://v.qq.com/x/page/v09504z0000.html">
+                    <img src="14.png" alt="茶的历史">
+                    <div class="video-info">
+                        <div class="video-title">【科普】一片树叶,如何成为文化瑰宝?茶的科普(一)</div>
+                        <div class="video-desc">来源: 腾讯视频 | 04:54</div>
+                    </div>
+                </div>
+                <div class="video-item" data-video="https://v.qq.com/x/page/v09504z1111.html">
+                    <img src="15.png" alt="茶和天下">
+                    <div class="video-info">
+                        <div class="video-title">文明中国说 | "茶"和天下</div>
+                        <div class="video-desc">来源: 腾讯视频 | 09:45</div>
+                    </div>
+                </div>
+                <div class="video-item" data-video="https://v.qq.com/x/page/v09504z2222.html">
+                    <img src="16.png" alt="宋代点茶">
+                    <div class="video-info">
+                        <div class="video-title">宋代点茶:一分钟探索中国茶文化的精致与魅力</div>
+                        <div class="video-desc">来源: 腾讯视频 | 01:12</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. AR体验 -->
+        <div class="page" id="page-ar">
+            <div class="ar-container">
+                <div class="ar-card" data-ar-type="tea-mountain">
+                    <div class="ar-icon">AR</div>
+                    <div class="ar-desc">茶山、茶园<br>虚拟参观</div>
+                    <button class="btn">开始体验</button>
+                </div>
+                <div class="ar-card" data-ar-type="tea-making">
+                    <div class="ar-icon">AR</div>
+                    <div class="ar-desc">虚拟制茶体验<br>360°沉浸式学习</div>
+                    <button class="btn">开始体验</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. 用户中心 - 优化布局结构 -->
+        <div class="page" id="page-user">
+            <div class="user-wrapper">
+                <div class="user-sidebar">
+                    <div class="user-header">
+                        <div class="avatar">
+                            <img src="1.png" alt="用户头像">
+                            <div class="avatar-upload">+</div>
+                        </div>
+                        <div class="user-info">
+                            <div>昵称：茶友_8888</div>
+                            <div>UID：88888888</div>
+                            <div class="user-info-edit">编辑资料</div>
+                        </div>
+                    </div>
+                    <div class="user-menu-list">
+                        <div class="user-menu-item" data-menu="circle">
+                            茶友圈
+                            <i>→</i>
+                        </div>
+                        <div class="user-menu-item" data-menu="orders">
+                            订单
+                            <i>→</i>
+                        </div>
+                        <div class="user-menu-item" data-menu="reservations">
+                            预约记录
+                            <i>→</i>
+                        </div>
+                        <div class="user-menu-item" data-menu="settings">
+                            设置
+                            <i>→</i>
+                        </div>
+                    </div>
+                </div>
+                <div class="user-content">
+                    请选择左侧菜单查看相关内容
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部导航栏 - 优化样式 -->
+    <div class="nav">
+        <div class="nav-item active" data-page="page-index"><i>🏠</i>主页</div>
+        <div class="nav-item" data-page="page-mall"><i>★</i>商城</div>
+        <div class="nav-item" data-page="page-custom"><i>🎨</i>定制</div>
+        <div class="nav-item" data-page="page-culture"><i>🎓</i>文化学堂</div>
+        <div class="nav-item" data-page="page-ar"><i>AR</i>AR体验</div>
+        <div class="nav-item" data-page="page-user"><i>👤</i>用户</div>
+    </div>
+
+    <!-- 弹窗组件 -->
+    <div class="modal" id="commonModal">
+        <div class="modal-content">
+            <div class="modal-close" id="modalClose">×</div>
+            <div class="modal-body" id="modalBody">
+                <!-- 弹窗内容动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载提示 -->
+    <div class="loading" id="loading">加载中...</div>
+
+    <!-- 交互逻辑脚本 -->
+    <script>
+        // 全局变量
+        const modal = document.getElementById('commonModal');
+        const modalBody = document.getElementById('modalBody');
+        const modalClose = document.getElementById('modalClose');
+        const loading = document.getElementById('loading');
+        
+        // 1. 底部导航切换逻辑
+        const navItems = document.querySelectorAll('.nav-item');
+        const pages = document.querySelectorAll('.page');
+        
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // 移除所有active类
+                navItems.forEach(nav => nav.classList.remove('active'));
+                pages.forEach(page => page.classList.remove('active'));
+                
+                // 添加当前active类
+                this.classList.add('active');
+                const targetPageId = this.getAttribute('data-page');
+                document.getElementById(targetPageId).classList.add('active');
+            });
+        });
+
+        // 新增：logo点击返回主页
+        document.querySelector('.logo').addEventListener('click', function() {
+            navItems.forEach(nav => nav.classList.remove('active'));
+            pages.forEach(page => page.classList.remove('active'));
+            document.querySelector('.nav-item[data-page="page-index"]').classList.add('active');
+            document.getElementById('page-index').classList.add('active');
+        });
+
+        // 2. 主页交互 - 推荐商品点击
+        document.querySelectorAll('.grid-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const name = this.getAttribute('data-name');
+                showModal(`
+                    <h3>${name}</h3>
+                    <p style="margin: 15px 0; font-size: 1.1rem; line-height: 1.6;">精选优质${name}，品质保证，支持定制！</p>
+                    <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+                        <button class="btn btn-gray" onclick="closeModal()">查看详情</button>
+                        <button class="btn" onclick="closeModal()">立即购买</button>
+                    </div>
+                `);
+            });
+        });
+
+        // 3. 商城交互
+        // 3.1 分类切换
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                
+                const category = this.getAttribute('data-category');
+                showLoading();
+                
+                // 模拟加载商品数据
+                setTimeout(() => {
+                    hideLoading();
+                    // 实际项目中这里会根据分类请求不同的商品数据
+                    if (category === 'ar') {
+                        showModal(`
+                            <h3>AR体验服务</h3>
+                            <p style="margin: 15px 0; font-size: 1.1rem;">AR茶山参观：¥99/次</p>
+                            <p style="margin: 15px 0; font-size: 1.1rem;">AR制茶体验：¥199/次</p>
+                            <button class="btn" onclick="closeModal()" style="display: block; margin: 20px auto 0;">立即购买</button>
+                        `);
+                    }
+                }, 800);
+            });
+        });
+
+        // 3.2 筛选标签点击
+        document.querySelectorAll('.filter-tag').forEach(tag => {
+            tag.addEventListener('click', function() {
+                // 同一行的筛选标签互斥
+                const parentRow = this.parentElement;
+                parentRow.querySelectorAll('.filter-tag').forEach(t => {
+                    t.classList.remove('highlight');
+                });
+                this.classList.add('highlight');
+                
+                showLoading();
+                // 模拟筛选加载
+                setTimeout(hideLoading, 600);
+            });
+        });
+
+        // 3.3 商品点击
+        document.querySelectorAll('.goods-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const title = this.querySelector('.goods-title').textContent;
+                const price = this.querySelector('.goods-price').textContent;
+                
+                showModal(`
+                    <h3 style="font-size: 1.5rem; margin-bottom: 15px;">${title}</h3>
+                    <img src="${this.querySelector('img').src}" style="width: 100%; border-radius: 8px; margin: 10px 0; max-height: 400px; object-fit: cover;" alt="${title}">
+                    <p style="font-size: 1.5rem; color: #e63946; font-weight: bold; margin: 15px 0;">${price}</p>
+                    <p style="margin: 15px 0; font-size: 1.1rem; line-height: 1.6;">精选优质茶叶，产地直供，假一赔十！</p>
+                    <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+                        <button class="btn btn-gray" onclick="closeModal()">加入购物车</button>
+                        <button class="btn" onclick="closeModal()">立即购买</button>
+                    </div>
+                `);
+            });
+        });
+
+        // 4. 定制页面交互
+        // 4.1 日期选择
+        document.querySelectorAll('.map-header .date').forEach(date => {
+            date.addEventListener('click', function() {
+                document.querySelectorAll('.map-header .date').forEach(d => {
+                    d.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        });
+
+        // 4.2 地图热点点击
+        document.querySelectorAll('.map-hotspot').forEach(hotspot => {
+            hotspot.addEventListener('click', function() {
+                const num = this.textContent;
+                showModal(`
+                    <h3 style="font-size: 1.5rem; margin-bottom: 15px;">制茶体验点 ${num} 号</h3>
+                    <p style="margin: 15px 0; font-size: 1.1rem;">地址：武汉市洪山区茶博大道88号</p>
+                    <p style="margin: 15px 0; font-size: 1.1rem;">可预约时段：9:00-12:00 | 14:00-17:00</p>
+                    <p style="margin: 15px 0; font-size: 1.1rem;">指导大师：李大师（${num}号点专属）</p>
+                    <button class="btn" onclick="closeModal()" style="display: block; margin: 20px auto 0;">选择此地点</button>
+                `);
+            });
+        });
+
+        // 4.3 预约提交
+        document.getElementById('submitBooking').addEventListener('click', function() {
+            const name = document.getElementById('nameInput').value;
+            const phone = document.getElementById('phoneInput').value;
+            const people = document.getElementById('peopleInput').value;
+            
+            if (!name) {
+                alert('请输入您的姓名');
+                return;
+            }
+            if (!/^1[3-9]\d{9}$/.test(phone)) {
+                alert('请输入正确的手机号码');
+                return;
+            }
+            if (people < 1) {
+                alert('预约人数不能少于1人');
+                return;
+            }
+            
+            showLoading();
+            // 模拟提交预约
+            setTimeout(() => {
+                hideLoading();
+                showModal(`
+                    <h3 style="color: #2c5c42; text-align: center; margin-bottom: 20px; font-size: 1.8rem;">预约成功！</h3>
+                    <p style="font-size: 1.1rem; margin: 8px 0;">姓名：${name}</p>
+                    <p style="font-size: 1.1rem; margin: 8px 0;">电话：${phone}</p>
+                    <p style="font-size: 1.1rem; margin: 8px 0;">人数：${people}人</p>
+                    <p style="font-size: 1.1rem; margin: 15px 0;">预约日期：周日 01.05</p>
+                    <p style="color: #999; font-size: 1rem; margin: 15px 0; line-height: 1.6;">我们会在1个工作日内与您联系确认</p>
+                    <button class="btn" onclick="closeModal()" style="display: block; margin: 20px auto 0;">确定</button>
+                `);
+                
+                // 清空表单
+                document.getElementById('nameInput').value = '';
+                document.getElementById('phoneInput').value = '';
+                document.getElementById('peopleInput').value = '1';
+            }, 1000);
+        });
+
+        // 5. 文化学堂交互 - 视频点击
+        document.querySelectorAll('.video-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const videoUrl = this.getAttribute('data-video');
+                const title = this.querySelector('.video-title').textContent;
+                
+                showModal(`
+                    <h3 style="font-size: 1.5rem; margin-bottom: 15px;">${title}</h3>
+                    <p style="margin: 15px 0; font-size: 1.1rem; line-height: 1.6;">点击下方按钮跳转到视频播放页面</p>
+                    <a href="${videoUrl}" target="_blank" style="display: block; text-align: center;">
+                        <button class="btn" style="margin-top: 20px;">观看视频</button>
+                    </a>
+                `);
+            });
+        });
+
+        // 6. AR体验交互
+        document.querySelectorAll('.ar-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const type = this.getAttribute('data-ar-type');
+                const title = type === 'tea-mountain' ? '茶山虚拟参观' : '虚拟制茶体验';
+                
+                showLoading();
+                // 模拟AR加载
+                setTimeout(() => {
+                    hideLoading();
+                    showModal(`
+                        <h3 style="font-size: 1.5rem; margin-bottom: 15px;">${title}</h3>
+                        <p style="margin: 15px 0; font-size: 1.1rem; line-height: 1.6;">请确保您的设备支持AR功能，并授予摄像头权限</p>
+                        <div style="background: #eee; height: 300px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 20px 0; font-size: 1.2rem;">
+                            AR体验加载中...
+                        </div>
+                        <button class="btn" onclick="closeModal()" style="display: block; margin: 0 auto;">开始体验</button>
+                    `);
+                }, 1200);
+            });
+        });
+
+        // 7. 用户中心交互
+        // 7.1 头像上传
+        document.querySelector('.avatar-upload').addEventListener('click', function(e) {
+            e.stopPropagation();
+            showModal(`
+                <h3 style="font-size: 1.5rem; margin-bottom: 15px;">更换头像</h3>
+                <p style="margin: 15px 0; font-size: 1.1rem;">请选择上传方式</p>
+                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+                    <button class="btn btn-gray" onclick="closeModal()">拍照</button>
+                    <button class="btn" onclick="closeModal()">从相册选择</button>
+                </div>
+            `);
+        });
+
+        // 7.2 编辑资料
+        document.querySelector('.user-info-edit').addEventListener('click', function() {
+            showModal(`
+                <h3 style="font-size: 1.5rem; margin-bottom: 15px;">编辑个人资料</h3>
+                <div style="display: flex; flex-direction: column; gap: 20px; margin: 20px 0;">
+                    <input type="text" placeholder="请输入昵称" value="茶友_8888" style="padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                    <input type="text" placeholder="请输入个性签名" style="padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                </div>
+                <button class="btn" onclick="closeModal()" style="display: block; margin: 0 auto;">保存修改</button>
+            `);
+        });
+
+        // 7.3 菜单点击
+        document.querySelectorAll('.user-menu-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const menu = this.getAttribute('data-menu');
+                const titles = {
+                    circle: '茶友圈',
+                    orders: '我的订单',
+                    reservations: '预约记录',
+                    settings: '设置中心'
+                };
+                
+                showLoading();
+                setTimeout(() => {
+                    hideLoading();
+                    showModal(`
+                        <h3 style="font-size: 1.5rem; margin-bottom: 15px;">${titles[menu]}</h3>
+                        <div style="margin: 30px 0; text-align: center; color: #999; font-size: 1.2rem;">
+                            ${menu === 'orders' || menu === 'reservations' ? '暂无相关记录' : '功能开发中，敬请期待'}
+                        </div>
+                        <button class="btn" onclick="closeModal()" style="display: block; margin: 0 auto;">确定</button>
+                    `);
+                }, 600);
+            });
+        });
+
+        // 通用弹窗函数
+        function showModal(content) {
+            modalBody.innerHTML = content;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        // 加载提示函数
+        function showLoading() {
+            loading.style.display = 'block';
+        }
+
+        function hideLoading() {
+            loading.style.display = 'none';
+        }
+
+        // 关闭弹窗事件
+        modalClose.addEventListener('click', closeModal);
+        
+        // 点击弹窗外部关闭
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
